@@ -2,7 +2,9 @@ import os
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt 
 import calculos as sismico
+
 
 st.set_page_config(
     page_title="Análisis Modal Espectral E.030",
