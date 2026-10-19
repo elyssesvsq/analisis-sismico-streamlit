@@ -167,3 +167,4 @@ if os.path.exists("assets/Infografia_IA_Streamlit.png"):
     st.markdown("---")
     with st.expander("🖼️ 5. Ver Infografía Resumen del Funcionamiento y Resultados", expanded=False):
         st.image("assets/Infografia_IA_Streamlit.png", use_container_width=True)
+
