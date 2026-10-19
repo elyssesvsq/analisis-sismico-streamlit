@@ -132,39 +132,48 @@ st.download_button(
 st.markdown("---")
 
 # =====================================================================
-# SECCIÓN DE LOS 4 GRÁFICOS DE CÁLCULOS Y RESULTADOS
+# GENERACIÓN Y VISUALIZACIÓN DINÁMICA DE GIFS EN MOVIMIENTO
 # =====================================================================
-st.subheader("📈 4. Panel de 4 Gráficos de Cálculos y Resultados")
+st.markdown("---")
+st.subheader("🎥 5. Animaciones Dinámicas Automáticas (GIFs Modales)")
+st.markdown("Generando y actualizando las animaciones modales armónicas en función de tus datos actuales:")
 
-filtro_grafico = st.selectbox(
-    "Selecciona la vista de gráficos:",
-    ["Mostrar los 4 Gráficos Simultáneamente", "1. Espectro de Pseudo-Aceleración", "2. Fuerzas Sísmicas por Piso", "3. Cortantes Modales", "4. Combinaciones Normativas y Vreal"]
-)
+import matplotlib.animation as animation
+from matplotlib.animation import PillowWriter
 
-fig1 = sismico.grafico_1_espectro(T_modos, res['Sa'], params)
-fig2 = sismico.grafico_2_fuerzas_modales(pisos, res['F_modos'])
-fig3 = sismico.grafico_3_cortantes_modales(pisos, res['V_modos'])
-fig4 = sismico.grafico_4_combinaciones(pisos, df_resultados)
+os.makedirs("resultados_graficos", exist_ok=True)
+pisos_con_base = np.append(pisos, 0)
+t_frames = np.linspace(0, 2*np.pi, 25)
 
-if filtro_grafico == "Mostrar los 4 Gráficos Simultáneamente":
-    c1, c2 = st.columns(2)
-    with c1:
-        st.pyplot(fig1)
-        st.pyplot(fig3)
-    with c2:
-        st.pyplot(fig2)
-    st.pyplot(fig4)
-elif filtro_grafico == "1. Espectro de Pseudo-Aceleración":
-    st.pyplot(fig1)
-elif filtro_grafico == "2. Fuerzas Sísmicas por Piso":
-    st.pyplot(fig2)
-elif filtro_grafico == "3. Cortantes Modales":
-    st.pyplot(fig3)
-else:
-    st.pyplot(fig4)
+# Generar los 3 GIFs automáticamente en tiempo de ejecución con los nuevos Phi y T
+col_g1, col_g2, col_g3 = st.columns(3)
+columnas_gif = [col_g1, col_g2, col_g3]
 
-if os.path.exists("assets/Infografia_IA_Streamlit.png"):
-    st.markdown("---")
-    with st.expander("🖼️ 5. Ver Infografía Resumen del Funcionamiento y Resultados", expanded=False):
-        st.image("assets/Infografia_IA_Streamlit.png", use_container_width=True)
+for i in range(3):
+    fig_g, ax_g = plt.subplots(figsize=(4, 6))
+    ax_g.set_xlim(-0.2, 0.2)
+    ax_g.set_ylim(0, max(pisos) + 1)
+    ax_g.set_title(f'Modo {i+1} ($T_{{ {i+1} }} = {T_modos[i]:.3f}$s)')
+    ax_g.set_ylabel('Piso')
+    ax_g.set_xlabel('Amplitud Relativa')
+    ax_g.set_yticks(pisos_con_base)
+    ax_g.grid(True, linestyle='--', alpha=0.5)
+    ax_g.axvline(x=0, color='black', linewidth=1, alpha=0.5)
+    
+    line_g, = ax_g.plot([], [], 'o-', lw=3, color='#800000', markersize=8)
+    
+    def animate_func(frame, mode_idx=i):
+        disp = np.append(phi[:, mode_idx] * np.sin(frame), 0)
+        line_g.set_data(disp, pisos_con_base)
+        return line_g,
+
+    ani = animation.FuncAnimation(fig_g, animate_func, frames=t_frames, interval=100, blit=True)
+    ruta_gif_dinamico = f"resultados_graficos/03_Animacion_Modo_{i+1}.gif"
+    ani.save(ruta_gif_dinamico, writer=PillowWriter(fps=15))
+    plt.close(fig_g)
+    
+    # Mostrar el GIF animado en su respectiva columna en Streamlit
+    with columnas_gif[i]:
+        st.markdown(f"**Modo {i+1}** ($T_{{ {i+1} }} = {T_modos[i]:.3f}$s)")
+        st.image(ruta_gif_dinamico, use_container_width=True)
 
